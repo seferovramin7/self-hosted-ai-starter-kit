@@ -1,0 +1,38 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          password: ${{ secrets.DO_PASSWORD }}
+          script: |
+            set -e
+            APP_DIR="/root/self-hosted-ai-starter-kit"
+            REPO_URL="https://github.com/seferovramin7/self-hosted-ai-starter-kit.git"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            git fetch origin main
+            git reset --hard origin/main
+
+            if [ ! -f .env ]; then
+              echo "ERROR: .env tapilmadi. Once serverde '$APP_DIR/.env' yaradin." >&2
+              exit 1
+            fi
+
+            docker compose pull
+            docker compose up -d --build --remove-orphans
+            docker image prune -f
