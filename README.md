@@ -1,235 +1,409 @@
-# Self-hosted AI starter kit
+# Self-Hosted AI Starter Kit with FastAPI Integration
 
-**Self-hosted AI Starter Kit** is an open-source Docker Compose template designed to swiftly initialize a comprehensive local AI and low-code development environment.
+A comprehensive Docker-based setup featuring n8n automation, FastAPI webhook integration, and supporting services for AI-powered workflows.
 
-![n8n.io - Screenshot](https://raw.githubusercontent.com/n8n-io/self-hosted-ai-starter-kit/main/assets/n8n-demo.gif)
+## 📋 Table of Contents
 
-Curated by <https://github.com/n8n-io>, it combines the self-hosted n8n
-platform with a curated list of compatible AI products and components to
-quickly get started with building self-hosted AI workflows.
+- [Overview](#overview)
+- [Services](#services)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [FastAPI Application](#fastapi-application)
+- [Usage Examples](#usage-examples)
+- [Troubleshooting](#troubleshooting)
+- [Architecture](#architecture)
 
-> [!TIP]
-> [Read the announcement](https://blog.n8n.io/self-hosted-ai/)
+## 🎯 Overview
 
-### What’s included
+This project provides a self-hosted AI automation platform with:
+- **n8n** - Workflow automation platform
+- **FastAPI** - Python API service for webhook integration
+- **PostgreSQL** - Database backend
+- **Qdrant** - Vector database for AI embeddings
+- **Ollama** - Local LLM hosting (CPU/GPU support)
+- **Browserless** - Headless browser automation
+- **Portainer** - Container management UI
 
-✅ [**Self-hosted n8n**](https://n8n.io/) - Low-code platform with over 400
-integrations and advanced AI components
+## 🚀 Services
 
-✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform to install
-and run the latest local LLMs
+| Service | Port | Description |
+|---------|------|-------------|
+| n8n | 5678 | Workflow automation UI |
+| FastAPI | 8000 | Webhook caller API |
+| PostgreSQL | 5432 | Database (internal) |
+| Qdrant | 6333 | Vector database |
+| Portainer | 9000 | Container management |
+| Browserless | 3002 | Headless Chrome |
+| Ollama | 11434 | Local LLM service |
 
-✅ [**Qdrant**](https://qdrant.tech/) - Open-source, high performance vector
-store with an comprehensive API
+## 📦 Prerequisites
 
-✅ [**PostgreSQL**](https://www.postgresql.org/) -  Workhorse of the Data
-Engineering world, handles large amounts of data safely.
+- Docker Desktop installed and running
+- At least 4GB RAM available
+- 10GB free disk space
 
-### What you can build
-
-⭐️ **AI Agents** for scheduling appointments
-
-⭐️ **Summarize Company PDFs** securely without data leaks
-
-⭐️ **Smarter Slack Bots** for enhanced company communications and IT operations
-
-⭐️ **Private Financial Document Analysis** at minimal cost
-
-## Installation
-
-### Cloning the Repository
-
+**For Mac users:**
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+# Install Docker Desktop
+brew install --cask docker
+```
+
+## ⚡ Quick Start
+
+1. **Clone and navigate to the project:**
+```bash
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
 ```
 
-### Running n8n using Docker Compose
+2. **Configure environment variables:**
+```bash
+cp .env.example .env  # If .env doesn't exist
+```
 
-#### For Nvidia GPU users
+Edit `.env` and set your n8n webhook URL:
+```bash
+N8N_WEBHOOK_URL=http://n8n:5678/webhook-test/YOUR-WEBHOOK-ID
+```
+
+3. **Start all services:**
+```bash
+# For CPU-only systems
+docker compose --profile cpu up -d --build
+
+# For NVIDIA GPU systems
+docker compose --profile gpu-nvidia up -d --build
+
+# For AMD GPU systems
+docker compose --profile gpu-amd up -d --build
+```
+
+4. **Verify services are running:**
+```bash
+docker compose ps
+```
+
+5. **Access the services:**
+- n8n UI: http://localhost:5678
+- FastAPI Docs: http://localhost:8000/docs
+- Portainer: http://localhost:9000
+- Qdrant: http://localhost:6333
+
+## ⚙️ Configuration
+
+### Required Environment Variables
+
+Create or edit `.env` file:
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose --profile gpu-nvidia up
+# Database
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_DB=n8n
+
+# n8n Configuration
+N8N_ENCRYPTION_KEY=your-super-secret-key
+N8N_USER_MANAGEMENT_JWT_SECRET=your-jwt-secret
+N8N_WEBHOOK_URL=http://n8n:5678/webhook-test/YOUR-WEBHOOK-ID
+
+# Optional API Keys
+OPENAI_API_KEY=sk-...
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-> [!NOTE]
-> If you have not used your Nvidia GPU with Docker before, please follow the
-> [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
+### Getting Your n8n Webhook ID
 
-### For AMD GPU users on Linux
+1. Open n8n at http://localhost:5678
+2. Create a new workflow or open existing one
+3. Add a **Webhook** node
+4. Copy the webhook URL (format: `/webhook-test/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`)
+5. Update `N8N_WEBHOOK_URL` in your `.env` file
+6. Restart FastAPI service: `docker compose restart fastapi-app`
+
+## 🔌 FastAPI Application
+
+### Endpoints
+
+#### Health Check
+```bash
+GET /health
+```
+Returns the health status of the FastAPI service.
+
+#### Simple Webhook Trigger
+```bash
+GET /trigger-webhook-simple
+```
+Triggers your n8n webhook with a default message.
+
+#### Custom Webhook Trigger
+```bash
+POST /trigger-webhook
+Content-Type: application/json
+
+{
+  "message": "Your message",
+  "data": {
+    "key": "value"
+  }
+}
+```
+Triggers your n8n webhook with custom payload.
+
+### Interactive API Documentation
+
+Visit http://localhost:8000/docs for interactive Swagger documentation where you can test all endpoints.
+
+## 📝 Usage Examples
+
+### 1. Test Health Endpoint
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose --profile gpu-amd up
+curl http://localhost:8000/health
 ```
 
-#### For Mac / Apple Silicon users
+**Response:**
+```json
+{"status": "healthy"}
+```
 
-If you’re using a Mac with an M1 or newer processor, you can't expose your GPU
-to the Docker instance, unfortunately. There are two options in this case:
-
-1. Run the starter kit fully on CPU, like in the section "For everyone else"
-   below
-2. Run Ollama on your Mac for faster inference, and connect to that from the
-   n8n instance
-
-If you want to run Ollama on your mac, check the
-[Ollama homepage](https://ollama.com/)
-for installation instructions, and run the starter kit as follows:
+### 2. Trigger Simple Webhook
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose up
+curl http://localhost:8000/trigger-webhook-simple
 ```
 
-##### For Mac users running OLLAMA locally
+**Success Response:**
+```json
+{
+  "status": "success",
+  "webhook_url": "http://n8n:5678/webhook-test/...",
+  "response_status": 200
+}
+```
 
-If you're running OLLAMA locally on your Mac (not in Docker), you need to modify the OLLAMA_HOST environment variable
-
-1. Set OLLAMA_HOST to `host.docker.internal:11434` in your .env file. 
-2. Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
-
-    1. Head to <http://localhost:5678/home/credentials>
-    2. Click on "Local Ollama service"
-    3. Change the base URL to "http://host.docker.internal:11434/"
-
-#### For everyone else
+### 3. Trigger with Custom Data
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
-cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
-docker compose --profile cpu up
+curl -X POST http://localhost:8000/trigger-webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "New order received",
+    "data": {
+      "order_id": "12345",
+      "customer": "John Doe",
+      "amount": 99.99
+    }
+  }'
 ```
 
-## ⚡️ Quick start and usage
+### 4. Using Python Requests
 
-The core of the Self-hosted AI Starter Kit is a Docker Compose file, pre-configured with network and storage settings, minimizing the need for additional installations.
-After completing the installation steps above, simply follow the steps below to get started.
+```python
+import requests
 
-1. Open <http://localhost:5678/> in your browser to set up n8n. You’ll only
-   have to do this once.
-2. Open the included workflow:
-   <http://localhost:5678/workflow/srOnR8PAY3u4RSwb>
-3. Click the **Chat** button at the bottom of the canvas, to start running the workflow.
-4. If this is the first time you’re running the workflow, you may need to wait
-   until Ollama finishes downloading Llama3.2. You can inspect the docker
-   console logs to check on the progress.
+# Simple trigger
+response = requests.get("http://localhost:8000/trigger-webhook-simple")
+print(response.json())
 
-To open n8n at any time, visit <http://localhost:5678/> in your browser.
+# Custom payload
+payload = {
+    "message": "Processing data",
+    "data": {
+        "items": [1, 2, 3],
+        "status": "pending"
+    }
+}
+response = requests.post(
+    "http://localhost:8000/trigger-webhook",
+    json=payload
+)
+print(response.json())
+```
 
-With your n8n instance, you’ll have access to over 400 integrations and a
-suite of basic and advanced AI nodes such as
-[AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
-[Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
-and [Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
-nodes. To keep everything local, just remember to use the Ollama node for your
-language model and Qdrant as your vector store.
+### 5. Using JavaScript/Node.js
 
-> [!NOTE]
-> This starter kit is designed to help you get started with self-hosted AI
-> workflows. While it’s not fully optimized for production environments, it
-> combines robust components that work well together for proof-of-concept
-> projects. You can customize it to meet your specific needs
+```javascript
+// Using fetch
+const response = await fetch('http://localhost:8000/trigger-webhook', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    message: 'Event triggered',
+    data: { event: 'user_signup', user_id: 123 }
+  })
+});
 
-## Upgrading
+const result = await response.json();
+console.log(result);
+```
 
-* ### For Nvidia GPU setups:
+## 🔧 Troubleshooting
+
+### Docker Not Running
+```bash
+# Error: Cannot connect to Docker daemon
+# Solution: Start Docker Desktop and wait for it to be ready
+open -a Docker
+```
+
+### Webhook Returns 404
+**Issue:** Webhook not registered
+
+**Solution:** 
+1. Open n8n at http://localhost:5678
+2. Open your workflow
+3. Toggle the workflow to **Active** (switch in top-right)
+
+### Webhook Returns 403
+**Issue:** Webhook authentication or configuration issue
+
+**Solutions:**
+1. Check if workflow is active
+2. Verify webhook authentication settings in n8n
+3. Try using production webhook instead of test webhook
+4. Check n8n logs: `docker compose logs n8n --tail 50`
+
+### Connection Failed Error
+**Issue:** Services can't communicate
+
+**Solution:**
+```bash
+# Restart all services
+docker compose down
+docker compose up -d --build
+
+# Check network connectivity
+docker compose exec fastapi-app ping n8n
+```
+
+### Port Already in Use
+```bash
+# Find process using port 8000
+lsof -i :8000
+
+# Kill the process or change FastAPI port in docker-compose.yml
+```
+
+### View Logs
 
 ```bash
-docker compose --profile gpu-nvidia pull
-docker compose create && docker compose --profile gpu-nvidia up
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f fastapi-app
+docker compose logs -f n8n
+
+# Last 50 lines
+docker compose logs --tail 50 n8n
 ```
 
-* ### For Mac / Apple Silicon users
+### Reset Everything
 
 ```bash
-docker compose pull
-docker compose create && docker compose up
+# Stop and remove all containers and volumes
+docker compose down -v
+
+# Rebuild and start fresh
+docker compose up -d --build
 ```
 
-* ### For Non-GPU setups:
+## 🏗️ Architecture
+
+```
+┌─────────────┐
+│   FastAPI   │ :8000
+│ (Webhook    │
+│  Caller)    │
+└──────┬──────┘
+       │ HTTP POST
+       ▼
+┌─────────────┐     ┌──────────────┐
+│     n8n     │────▶│  PostgreSQL  │
+│ (Workflows) │     │  (Database)  │
+└──────┬──────┘     └──────────────┘
+       │
+       ├──────▶ Browserless (Web Automation)
+       ├──────▶ Qdrant (Vector DB)
+       └──────▶ Ollama (Local LLM)
+```
+
+### Data Flow
+
+1. **External Request** → FastAPI (`/trigger-webhook`)
+2. **FastAPI** → n8n Webhook (Internal Docker Network)
+3. **n8n Workflow** → Process data, call other services
+4. **Response** ← Back to FastAPI → Back to client
+
+### Network
+
+All services run on the `demo` Docker network, allowing them to communicate using service names (e.g., `http://n8n:5678`).
+
+## 📁 Project Structure
+
+```
+.
+├── docker-compose.yml          # Docker services configuration
+├── .env                        # Environment variables (gitignored)
+├── fastapi-app/
+│   ├── main.py                # FastAPI application
+│   ├── requirements.txt       # Python dependencies
+│   └── Dockerfile            # FastAPI container image
+├── n8n/
+│   ├── demo-data/            # Sample workflows
+│   └── entrypoint.sh         # n8n startup script
+└── shared/                   # Shared data between services
+```
+
+## 🔐 Security Notes
+
+1. **Change default passwords** in `.env` before production use
+2. **Never commit** `.env` file to git
+3. **Use HTTPS** in production (add reverse proxy like Nginx)
+4. **Secure webhook URLs** with authentication tokens
+5. **Limit network exposure** - only expose necessary ports
+
+## 🛠️ Development
+
+### Modifying FastAPI Application
 
 ```bash
-docker compose --profile cpu pull
-docker compose create && docker compose --profile cpu up
+# Edit the code
+vim fastapi-app/main.py
+
+# Rebuild and restart
+docker compose up -d --build fastapi-app
+
+# View logs
+docker compose logs -f fastapi-app
 ```
 
-## 👓 Recommended reading
+### Adding Dependencies
 
-n8n is full of useful content for getting started quickly with its AI concepts
-and nodes. If you run into an issue, go to [support](#support).
+```bash
+# Add to requirements.txt
+echo "new-package==1.0.0" >> fastapi-app/requirements.txt
 
-- [AI agents for developers: from theory to practice with n8n](https://blog.n8n.io/ai-agents/)
-- [Tutorial: Build an AI workflow in n8n](https://docs.n8n.io/advanced-ai/intro-tutorial/)
-- [Langchain Concepts in n8n](https://docs.n8n.io/advanced-ai/langchain/langchain-n8n/)
-- [Demonstration of key differences between agents and chains](https://docs.n8n.io/advanced-ai/examples/agent-chain-comparison/)
-- [What are vector databases?](https://docs.n8n.io/advanced-ai/examples/understand-vector-databases/)
+# Rebuild
+docker compose up -d --build fastapi-app
+```
 
-## 🎥 Video walkthrough
+## 📜 License
 
-- [Installing and using Local AI for n8n](https://www.youtube.com/watch?v=xz_X2N-hPg0)
+This project is open source and available under the MIT License.
 
-## 🛍️ More AI templates
+## 🤝 Contributing
 
-For more AI workflow ideas, visit the [**official n8n AI template
-gallery**](https://n8n.io/workflows/categories/ai/). From each workflow,
-select the **Use workflow** button to automatically import the workflow into
-your local n8n instance.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Learn AI key concepts
+## 📞 Support
 
-- [AI Agent Chat](https://n8n.io/workflows/1954-ai-agent-chat/)
-- [AI chat with any data source (using the n8n workflow too)](https://n8n.io/workflows/2026-ai-chat-with-any-data-source-using-the-n8n-workflow-tool/)
-- [Chat with OpenAI Assistant (by adding a memory)](https://n8n.io/workflows/2098-chat-with-openai-assistant-by-adding-a-memory/)
-- [Use an open-source LLM (via Hugging Face)](https://n8n.io/workflows/1980-use-an-open-source-llm-via-huggingface/)
-- [Chat with PDF docs using AI (quoting sources)](https://n8n.io/workflows/2165-chat-with-pdf-docs-using-ai-quoting-sources/)
-- [AI agent that can scrape webpages](https://n8n.io/workflows/2006-ai-agent-that-can-scrape-webpages/)
-
-### Local AI templates
-
-- [Tax Code Assistant](https://n8n.io/workflows/2341-build-a-tax-code-assistant-with-qdrant-mistralai-and-openai/)
-- [Breakdown Documents into Study Notes with MistralAI and Qdrant](https://n8n.io/workflows/2339-breakdown-documents-into-study-notes-using-templating-mistralai-and-qdrant/)
-- [Financial Documents Assistant using Qdrant and](https://n8n.io/workflows/2335-build-a-financial-documents-assistant-using-qdrant-and-mistralai/) [Mistral.ai](http://mistral.ai/)
-- [Recipe Recommendations with Qdrant and Mistral](https://n8n.io/workflows/2333-recipe-recommendations-with-qdrant-and-mistral/)
-
-## Tips & tricks
-
-### Accessing local files
-
-The self-hosted AI starter kit will create a shared folder (by default,
-located in the same directory) which is mounted to the n8n container and
-allows n8n to access files on disk. This folder within the n8n container is
-located at `/data/shared` -- this is the path you’ll need to use in nodes that
-interact with the local filesystem.
-
-**Nodes that interact with the local filesystem**
-
-- [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filesreadwrite/)
-- [Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/)
-- [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/)
-
-## 📜 License
-
-This project is licensed under the Apache License 2.0 - see the
-[LICENSE](LICENSE) file for details.
-
-## 💬 Support
-
-Join the conversation in the [n8n Forum](https://community.n8n.io/), where you
-can:
-
-- **Share Your Work**: Show off what you’ve built with n8n and inspire others
-  in the community.
-- **Ask Questions**: Whether you’re just getting started or you’re a seasoned
-  pro, the community and our team are ready to support with any challenges.
-- **Propose Ideas**: Have an idea for a feature or improvement? Let us know!
-  We’re always eager to hear what you’d like to see next.
+For issues and questions:
+- Check the [Troubleshooting](#troubleshooting) section
+- Review Docker logs: `docker compose logs`
+- Ensure all services are healthy: `docker compose ps`

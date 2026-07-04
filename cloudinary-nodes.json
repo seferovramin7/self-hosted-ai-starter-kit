@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nlet caption = d.caption;\nif (!caption) {\n  caption = [\n    `🚗 ${d.title}`,\n    `📋 ${d.subtitle}`,\n    ``,\n    `💰 Təxmini alış qiyməti: ${d.price}`,\n    ``,\n    `📞 Ətraflı məlumat üçün profilə müraciət edin.`,\n    ``,\n    d.hashtags,\n  ].join('\\n');\n}\nreturn [{ json: { ...d, caption } }];"
+      },
+      "id": "node-new-caption",
+      "name": "Build Caption",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/screenshot",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"html\": $json.html, \"options\": { \"type\": \"jpeg\", \"quality\": 95, \"fullPage\": true }, \"viewport\": { \"width\": 800, \"height\": 1280, \"deviceScaleFactor\": 2 }, \"waitFor\": 2000 } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "node-new-browserless",
+      "name": "Screenshot via Browserless",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 320]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "fileProperty": "data",
+        "options": {
+          "folder": "auto-import-baku"
+        }
+      },
+      "id": "node-new-cloudinary",
+      "name": "Upload to Cloudinary",
+      "type": "n8n-nodes-base.cloudinary",
+      "typeVersion": 1,
+      "position": [1260, 320]
+    }
+  ]
+}
