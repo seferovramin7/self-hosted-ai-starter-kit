@@ -31,7 +31,7 @@ async def trigger_webhook(payload: WebhookPayload):
     """
     Trigger the n8n webhook with custom payload
     
-    Example payload:
+
     {
         "message": "Hello from FastAPI",
         "data": {"key": "value"}
