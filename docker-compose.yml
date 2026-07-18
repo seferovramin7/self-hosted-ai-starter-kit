@@ -99,10 +99,12 @@ services:
       - N8N_SECURE_COOKIE=false
       - N8N_RESTRICT_FILE_ACCESS_TO=
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
-      # === Webhook / Cloudflare Tunnel ===
-      - WEBHOOK_URL=https://n8n.yourdomain.com
-      - N8N_HOST=n8n.yourdomain.com
-      - N8N_PROTOCOL=https
+      # === Webhook / Cloudflare Quick Tunnel ===
+      # These are rewritten by scripts/sync-cloudflare-quick-tunnel.sh each time
+      # the cloudflared Quick Tunnel gets a new *.trycloudflare.com hostname.
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
       - N8N_PORT=5678
       - N8N_PROXY_HOPS=1
       # ===================================
@@ -129,9 +131,10 @@ services:
     container_name: cloudflared
     networks: ['demo']
     restart: unless-stopped
-    command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    # Quick Tunnel: no Cloudflare account/domain/token needed. Gives a random
+    # https://<random>.trycloudflare.com URL each time this container (re)starts.
+    # For a stable domain later, switch back to `tunnel run` + TUNNEL_TOKEN.
+    command: tunnel --no-autoupdate --url http://n8n:5678
     depends_on:
       - n8n
 
