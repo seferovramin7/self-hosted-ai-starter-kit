@@ -132,7 +132,6 @@ services:
     networks: ['demo']
     restart: unless-stopped
     # Quick Tunnel: no Cloudflare account/domain/token needed. Gives a random
-    # https://<random>.trycloudflare.com URL each time this container (re)starts.
     # For a stable domain later, switch back to `tunnel run` + TUNNEL_TOKEN.
     command: tunnel --no-autoupdate --url http://n8n:5678
     depends_on:
