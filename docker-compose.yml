@@ -4,6 +4,8 @@ volumes:
   ollama_storage:
   qdrant_storage:
   portainer_storage:
+  caddy_data:
+  caddy_config:
 
 networks:
   demo:
@@ -93,18 +95,14 @@ services:
     hostname: n8n
     container_name: n8n
     restart: unless-stopped
-    ports:
-      - 5678:5678
     environment:
-      - N8N_SECURE_COOKIE=false
+      - N8N_SECURE_COOKIE=true
       - N8N_RESTRICT_FILE_ACCESS_TO=
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
-      # === Webhook / Cloudflare Quick Tunnel ===
-      # These are rewritten by scripts/sync-cloudflare-quick-tunnel.sh each time
-      # the cloudflared Quick Tunnel gets a new *.trycloudflare.com hostname.
-      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
-      - N8N_HOST=${N8N_HOST:-localhost}
-      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      # === Webhook / public domain (fronted by Caddy) ===
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
       - N8N_PORT=5678
       - N8N_PROXY_HOPS=1
       # ===================================
@@ -126,14 +124,18 @@ services:
       n8n-import:
         condition: service_completed_successfully
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
     networks: ['demo']
     restart: unless-stopped
-    # Quick Tunnel: no Cloudflare account/domain/token needed. Gives a random
-    # For a stable domain later, switch back to `tunnel run` + TUNNEL_TOKEN.
-    command: tunnel --no-autoupdate --url http://n8n:5678
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - n8n
 
