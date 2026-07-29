@@ -37,5 +37,3 @@ jobs:
             docker compose pull
             docker compose up -d --build --remove-orphans
             docker image prune -f
-
-            sh scripts/sync-cloudflare-quick-tunnel.sh
