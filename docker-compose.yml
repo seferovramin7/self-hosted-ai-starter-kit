@@ -95,14 +95,16 @@ services:
     hostname: n8n
     container_name: n8n
     restart: unless-stopped
+    ports:
+      - "5678:5678"
     environment:
-      - N8N_SECURE_COOKIE=true
+      - N8N_SECURE_COOKIE=false
       - N8N_RESTRICT_FILE_ACCESS_TO=
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # === Webhook / public domain (fronted by Caddy) ===
       - WEBHOOK_URL=${WEBHOOK_URL}
       - N8N_HOST=${N8N_HOST}
-      - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
+#      - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
       - N8N_PORT=5678
       - N8N_PROXY_HOPS=1
       # ===================================
