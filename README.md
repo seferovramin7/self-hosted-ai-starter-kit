@@ -2,7 +2,7 @@
 
 A comprehensive Docker-based setup featuring n8n automation, FastAPI webhook integration, and supporting services for AI-powered workflows.
 
-## 📋 Table of Contents salam
+## 📋 Table of Contents sala
 
 - [Overview](#overview)
 - [Services](#services)
